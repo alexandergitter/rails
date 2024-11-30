@@ -328,6 +328,7 @@ class AssetTagHelperTest < ActionView::TestCase
     %(preload_link_tag '//example.com/font.woff2', crossorigin: 'use-credentials') => %(<link rel="preload" href="//example.com/font.woff2" as="font" type="font/woff2" crossorigin="use-credentials" />),
     %(preload_link_tag '/media/audio.ogg', nopush: true) => %(<link rel="preload" href="/media/audio.ogg" as="audio" type="audio/ogg" />),
     %(preload_link_tag '/style.css', integrity: 'sha256-AbpHGcgLb+kRsJGnwFEktk7uzpZOCcBY74+YBdrKVGs') => %(<link rel="preload" href="/style.css" as="style" type="text/css" integrity="sha256-AbpHGcgLb+kRsJGnwFEktk7uzpZOCcBY74+YBdrKVGs">),
+    %(preload_link_tag '/style.css', nonce: true) => %(<link rel="preload" href="/style.css" as="style" type="text/css" nonce="iyhD0Yc0W+c=">),
     %(preload_link_tag '/sprite.svg') => %(<link rel="preload" href="/sprite.svg" as="image" type="image/svg+xml">),
     %(preload_link_tag '/mb-icon.png') => %(<link rel="preload" href="/mb-icon.png" as="image" type="image/png">)
   }
@@ -720,6 +721,16 @@ class AssetTagHelperTest < ActionView::TestCase
       stylesheet_link_tag("http://example.com/style.css", integrity: "sha256-AbpHGcgLb+kRsJGnwFEktk7uzpZOCcBY74+YBdrKVGs")
       javascript_include_tag("http://example.com/all.js", integrity: "sha256-AbpHGcgLb+kRsJGnwFEktk7uzpZOCcBY74+YBdrKVGs")
       expected = "<http://example.com/style.css>; rel=preload; as=style; integrity=sha256-AbpHGcgLb+kRsJGnwFEktk7uzpZOCcBY74+YBdrKVGs; nopush,<http://example.com/all.js>; rel=preload; as=script; integrity=sha256-AbpHGcgLb+kRsJGnwFEktk7uzpZOCcBY74+YBdrKVGs; nopush"
+      assert_equal expected, @response.headers["link"]
+    end
+  end
+
+  def test_should_set_preload_links_with_nonce
+    with_preload_links_header do
+      preload_link_tag("http://example.com/preload.js", nonce: true)
+      stylesheet_link_tag("http://example.com/style.css", nonce: true)
+      javascript_include_tag("http://example.com/all.js", nonce: true)
+      expected = "<http://example.com/preload.js>; rel=preload; as=script; type=text/javascript; nonce=iyhD0Yc0W+c=,<http://example.com/style.css>; rel=preload; as=style; nonce=iyhD0Yc0W+c=; nopush,<http://example.com/all.js>; rel=preload; as=script; nonce=iyhD0Yc0W+c=; nopush"
       assert_equal expected, @response.headers["link"]
     end
   end

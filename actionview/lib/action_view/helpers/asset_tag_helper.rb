@@ -127,6 +127,7 @@ module ActionView
             preload_link = "<#{href}>; rel=#{rel}; as=script"
             preload_link += "; crossorigin=#{crossorigin}" unless crossorigin.nil?
             preload_link += "; integrity=#{integrity}" unless integrity.nil?
+            preload_link += "; nonce=#{content_security_policy_nonce}" if options["nonce"] == true
             preload_link += "; nopush" if nopush
             preload_links << preload_link
           end
@@ -215,6 +216,7 @@ module ActionView
             preload_link = "<#{href}>; rel=preload; as=style"
             preload_link += "; crossorigin=#{crossorigin}" unless crossorigin.nil?
             preload_link += "; integrity=#{integrity}" unless integrity.nil?
+            preload_link += "; nonce=#{content_security_policy_nonce}" if options["nonce"] == true
             preload_link += "; nopush" if nopush
             preload_links << preload_link
           end
@@ -328,6 +330,7 @@ module ActionView
       # * <tt>:crossorigin</tt>  - Specify the crossorigin attribute, required to load cross-origin resources.
       # * <tt>:nopush</tt>  - Specify if the use of server push is not desired for the resource. Defaults to +false+.
       # * <tt>:integrity</tt> - Specify the integrity attribute.
+      # * <tt>:nonce</tt>  - When set to true, adds an automatic nonce value if you have Content Security Policy enabled.
       #
       # ==== Examples
       #
@@ -361,7 +364,12 @@ module ActionView
         crossorigin = "anonymous" if crossorigin == true || (crossorigin.blank? && as_type == "font")
         integrity = options[:integrity]
         nopush = options.delete(:nopush) || false
+        nonce = options.delete(:nonce) || false
         rel = mime_type == "module" ? "modulepreload" : "preload"
+
+        if nonce
+          options[:nonce] = content_security_policy_nonce
+        end
 
         link_tag = tag.link(
           rel: rel,
@@ -375,6 +383,7 @@ module ActionView
         preload_link += "; type=#{mime_type}" if mime_type
         preload_link += "; crossorigin=#{crossorigin}" if crossorigin
         preload_link += "; integrity=#{integrity}" if integrity
+        preload_link += "; nonce=#{content_security_policy_nonce}" if nonce
         preload_link += "; nopush" if nopush
 
         send_preload_links_header([preload_link])
